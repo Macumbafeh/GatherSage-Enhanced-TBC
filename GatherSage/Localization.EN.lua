@@ -119,6 +119,7 @@ gsMoteFire = "Mote of Fire";
 -- Herbs
 gsPeacebloom = "Peacebloom";
 gsSilverleaf = "Silverleaf";
+gsBloodthistle = "Bloodthistle";
 gsEarthroot = "Earthroot";
 gsMageroyal = "Mageroyal";
 gsBriarthorn = "Briarthorn";

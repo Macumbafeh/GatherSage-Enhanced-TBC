@@ -161,6 +161,13 @@ end
 
 function GatherSage.ProcessWithLink(tooltip, link)
   if (not link) then return; end
+  local linkstart = string.find(link,"|H")
+  local _,lastfound,type,id = string.find(link,"(%a+):(%d+):",linkstart and linkstart + 2)
+  local _,_,name = string.find(link,"%[([^%[%]]*)%]",lastfound)
+  
+  if (not ttLine2) or (string.find(ttLine2,gsMINING)) or (string.find(ttLine2,gsHERBING)) then -- Only do for minimap and viewport tooltips
+    GatherSage.ProcessTooltip(tooltip, name);
+  end
 end
 
 function GatherSage.ProcessWithName(tooltip, itemname)
@@ -169,7 +176,8 @@ function GatherSage.ProcessWithName(tooltip, itemname)
   local ttLine3 = getglobal(tooltip:GetName().."TextLeft3"):GetText()
 
   -- add skinning feature - by fuba
-  if ( (ttLine3) and (string.find(string.lower(ttLine3), string.lower(gsSKINNABLE))) ) then
+  --if ( (ttLine3) and (string.find(string.lower(ttLine3), string.lower(gsSKINNABLE))) ) then
+  if ( (ttLine3) and (string.find(string.lower(ttLine3), string.lower(UNIT_SKINNABLE_LEATHER))) ) then
     local lvl = tonumber(UnitLevel("mouseover"));
     local needlvlskin = 0;
     if (lvl-10)*10 >= 100 then
@@ -177,10 +185,9 @@ function GatherSage.ProcessWithName(tooltip, itemname)
     else
       if (lvl-10)*10 > 0 then needlvlskin = (lvl-10)*10 else needlvlskin = 1 end;
     end
-    getglobal(tooltip:GetName().."TextLeft3"):SetText(gsSKINNABLE.." ("..(needlvlskin)..")");
+    --getglobal(tooltip:GetName().."TextLeft3"):SetText(gsSKINNABLE.." ("..(needlvlskin)..")");
+    getglobal(tooltip:GetName().."TextLeft3"):SetText(UNIT_SKINNABLE_LEATHER.." ("..(needlvlskin)..")");
   end
-
-  local tooltiptext = getglobal(tooltip:GetName().."TextLeft2");
 
   if (not itemname) then return; end
   if (not ttLine2) or (string.find(ttLine2,gsMINING)) or (string.find(ttLine2,gsHERBING)) then -- Only do for minimap and viewport tooltips
@@ -193,27 +200,51 @@ function GatherSage.ProcessTooltip(frame, itemname)
   if (gsMine[itemname]) then
     tText = getglobal(frame:GetName().."TextLeft2");
     if not tText then return end;
-    local levelreq;
+    local levelreq, lvlmedium, lvleasy, lvltrivial;
     if(gsMine[itemname]["baseskill"] == 0) then
       levelreq = "?";
+      lvlmedium = 999;
+      lvleasy = 999;
+      lvltrivial = 999;
     else
       levelreq = gsMine[itemname]["baseskill"];
+      lvlmedium = gsMine[itemname]["medium"];
+      lvleasy = gsMine[itemname]["easy"];
+      lvltrivial = gsMine[itemname]["trivial"];
     end
-    local reqmsg = " ("..levelreq..")";
-    if tText:GetText() then
+    
+    -- UNIT_SKINNABLE_HERB = "Requires Herbalism"; -- The unit is a dead creature which can be skinned for its herb
+    -- UNIT_SKINNABLE_LEATHER = "Skinnable"; -- The unit is a dead creature which can be skinned for its pelt
+    -- UNIT_SKINNABLE_ROCK = "Requires Mining"; -- The unit is a dead creature which can be skinned for its rock
+    
+    local reqmsg = " ("..levelreq..")";    
+    if tText:GetText() and string.find(string.lower(tText:GetText()), string.lower(UNIT_SKINNABLE_ROCK)) then
       tText:SetText(tText:GetText()..reqmsg);
+    else
+      local myskilllevel = GatherSage_GetLevel("mining");
+      if myskilllevel >= lvltrivial then
+        frame:AddLine(UNIT_SKINNABLE_ROCK..reqmsg, 0.50, 0.50, 0.50, 1.00); -- gray (trivial)
+      elseif (myskilllevel >= lvleasy) and (myskilllevel < lvltrivial) then
+        frame:AddLine(UNIT_SKINNABLE_ROCK..reqmsg, 0.25, 0.75, 0.25, 1.00); -- green (easy)
+      elseif (myskilllevel >= lvlmedium) and (myskilllevel < lvleasy) then
+        frame:AddLine(UNIT_SKINNABLE_ROCK..reqmsg, 1.00, 1.00, 0.00, 1.00); -- yellow (optimal)
+      elseif (myskilllevel >= levelreq) and (myskilllevel < lvlmedium) then
+        frame:AddLine(UNIT_SKINNABLE_ROCK..reqmsg, 1.00, 0.50, 0.25, 1.00); -- orange (medium)
+      else
+        frame:AddLine(UNIT_SKINNABLE_ROCK..reqmsg, 1.00, 0.10, 0.10, 1.00); -- red (impossible)
+      end
+      frame:SetHeight(frame:GetHeight() + 14);
     end
-    frame:SetHeight(frame:GetHeight() + 14);
 
-    if (gsMineHasStone[itemname]) then
-      local myminehasstone = gsLight.."Chance of: "..gsTail..gsWhite..gsMineHasStone[itemname]..gsTail;
+    if (gsMineHasStone[itemname])  and IsAltKeyDown() then
+      local myminehasstone = gsLight..gspChanceOf..gsTail..gsWhite..gsMineHasStone[itemname]..gsTail;
       frame:AddLine(myminehasstone);
       frame:SetHeight(frame:GetHeight() + 14);
       local setwidno = ceil((strlen(myminehasstone)-11)*7.5);
       if (frame:GetWidth() < setwidno) then frame:SetWidth(setwidno); end
     end
 
-    if (gsMineHasGem[itemname]) then
+    if (gsMineHasGem[itemname]) and IsAltKeyDown() then
       for key, gemtype in pairs(gsMineHasGem[itemname]) do
         local myminehasgem = gsLight..gspChanceOf..gsTail..gemtype;
         frame:AddLine(myminehasgem);
@@ -227,17 +258,37 @@ function GatherSage.ProcessTooltip(frame, itemname)
     local levelreq;
     if(gsHerb[itemname]["baseskill"] == 0) then
       levelreq = "?";
+      lvlmedium = 999;
+      lvleasy = 999;
+      lvltrivial = 999;
     else
       levelreq = gsHerb[itemname]["baseskill"];
+      lvlmedium = gsHerb[itemname]["medium"];
+      lvleasy = gsHerb[itemname]["easy"];
+      lvltrivial = gsHerb[itemname]["trivial"];
     end
-
+    
     local reqmsg = " ("..levelreq..")";
-    if (tText:GetText() ~= nil) and (reqmsg ~= nil) then
-      tText:SetText(tText:GetText()..reqmsg);
+    if tText:GetText() and string.find(string.lower(tText:GetText()), string.lower(UNIT_SKINNABLE_HERB))  then
+       tText:SetText(tText:GetText()..reqmsg);
+      frame:SetHeight(frame:GetHeight() + 14);
+    else
+      local myskilllevel = GatherSage_GetLevel("herbing");
+      if myskilllevel >= lvltrivial and IsAltKeyDown() then
+        frame:AddLine(UNIT_SKINNABLE_HERB..reqmsg, 0.50, 0.50, 0.50, 1.00); -- gray (trivial)
+      elseif (myskilllevel >= lvleasy) and (myskilllevel < lvltrivial) and IsAltKeyDown() then
+        frame:AddLine(UNIT_SKINNABLE_HERB..reqmsg, 0.25, 0.75, 0.25, 1.00); -- green (easy)
+      elseif (myskilllevel >= lvlmedium) and (myskilllevel < lvleasy) and IsAltKeyDown() then
+        frame:AddLine(UNIT_SKINNABLE_HERB..reqmsg, 1.00, 1.00, 0.00, 1.00); -- yellow (optimal)
+      elseif (myskilllevel >= levelreq) and (myskilllevel < lvlmedium) and IsAltKeyDown() then
+        frame:AddLine(UNIT_SKINNABLE_HERB..reqmsg, 1.00, 0.50, 0.25, 1.00); -- orange (medium)
+      elseif (myskilllevel < levelreq) and IsAltKeyDown() then
+        frame:AddLine(UNIT_SKINNABLE_HERB..reqmsg, 1.00, 0.10, 0.10, 1.00); -- red (impossible)
+      end
       frame:SetHeight(frame:GetHeight() + 14);
     end
 
-    if (gsHerbHasHerb[itemname]) then
+    if (gsHerbHasHerb[itemname]) and IsAltKeyDown() then
       local myherbhasherb = gsLight..gspChanceOf..gsTail..gsWhite..gsHerbHasHerb[itemname]..gsTail;
       frame:AddLine(myherbhasherb);
       frame:SetHeight(frame:GetHeight() + 14);
@@ -245,24 +296,34 @@ function GatherSage.ProcessTooltip(frame, itemname)
       if (frame:GetWidth() < setwidno) then frame:SetWidth(setwidno); end
     end
 
-  elseif (gsOre[itemname]) then
+  elseif (gsOre[itemname]) and IsAltKeyDown() then
     local levelreq;
     if(gsOre[itemname]["baseskill"] == 0) then
       levelreq = "?";
+      lvlmedium = 999;
+      lvleasy = 999;
+      lvltrivial = 999;
     else
       levelreq = gsOre[itemname]["baseskill"];
+      lvlmedium = gsOre[itemname]["medium"];
+      lvleasy = gsOre[itemname]["easy"];
+      lvltrivial = gsOre[itemname]["trivial"];
     end
 
-    local myskilllevel = GatherSage_GetLevel("mining");
     local reqmsg = " ("..levelreq..")";
-    frame:SetHeight(frame:GetHeight() + 14);
-    if(levelreq == "?") then
-      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt,1,0.5,0,1);
-    elseif(levelreq <= myskilllevel) then
-      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt,0,1,0,1);
+    local myskilllevel = GatherSage_GetLevel("mining");
+    if myskilllevel >= lvltrivial then
+      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt, 0.50, 0.50, 0.50, 1.00); -- gray (trivial)
+    elseif (myskilllevel >= lvleasy) and (myskilllevel < lvltrivial) then
+      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt, 0.25, 0.75, 0.25, 1.00); -- green (easy)
+    elseif (myskilllevel >= lvlmedium) and (myskilllevel < lvleasy) then
+      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt, 1.00, 1.00, 0.00, 1.00); -- yellow (optimal)
+    elseif (myskilllevel >= levelreq) and (myskilllevel < lvlmedium) then
+      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt, 1.00, 0.50, 0.25, 1.00); -- orange (medium)
     else
-      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt,1,0,0,1);
+      frame:AddLine(gspRequires..gsMINING..reqmsg..gspSkillToSmelt, 1.00, 0.10, 0.10, 1.00); -- red (impossible)
     end
+    frame:SetHeight(frame:GetHeight() + 14);
   end
   frame:Show()
 end

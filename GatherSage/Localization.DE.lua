@@ -95,6 +95,7 @@ gsMoteFire = "Feuerpartikel";
 -- Herbs
 gsPeacebloom = "Friedensblume";
 gsSilverleaf = "Silberblatt";
+gsBloodthistle = "Blutdistel";
 gsEarthroot = "Erdwurzel";
 gsMageroyal = "Magusk\195\182nigskraut";
 gsBriarthorn = "Wilddornrose";

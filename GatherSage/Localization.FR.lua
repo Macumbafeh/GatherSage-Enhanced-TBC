@@ -3,6 +3,15 @@
 
 if (GetLocale() == "frFR") then
 
+-- Phrases
+gspCanMine = "You can now mine ";
+gspCanSmelt = "You can now smelt ";
+gspCanPick = "You can now pick ";
+gspRequires = "Requires ";
+gspSkill = " skill.";
+gspSkillToSmelt = " to smelt.";
+gspChanceOf = "Chance of: ";
+
 -- Skills as they appear in the spellbook
 gsMINING = "Minage";
 gsHERBING = "Herboristerie";
@@ -26,7 +35,7 @@ gsIndurium = "Filon d'indurium";
 gsObsidianChunk = "Grand morceau d'obsidienne";
 --- gsThorium = "Thorium Veins"; -- not referenced anywhere
 -- node variants
-gsSmallObsidianChunk = "Small Obsidian Chunk";
+gsSmallObsidianChunk = "Petit morceau d'obsidienne";
 gsSilverOz = "Ooze Covered Silver Vein";
 gsGoldOz = "Ooze Covered Gold Vein";
 gsMithrilOz = "Ooze Covered Mithril Deposit";
@@ -85,6 +94,7 @@ gsMoteFire = "Mote of Fire";
 -- Herbs
 gsPeacebloom = "pacifique";
 gsSilverleaf = "feuillargent";
+gsBloodthistle = "chardon sanglant";
 gsEarthroot = "terrestrine";
 gsMageroyal = "mage royal";
 gsBriarthorn = "eglantine";
