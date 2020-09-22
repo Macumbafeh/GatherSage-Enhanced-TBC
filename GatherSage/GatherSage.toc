@@ -5,6 +5,7 @@
 ## Original-Author: Dsanai
 ## Notes: Adds skill-level and other information to gathering item tooltips.
 ## SavedVariables: GatherSageDB
+## RequiredDeps: !Compatibility
 
 ###############
 ## Libraries ##
